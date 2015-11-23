@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<!--
+To change this license header, choose License Headers in Project Properties.
+To change this template file, choose Tools | Templates
+and open the template in the editor.
+-->
+<html>
+    <head>
+        <title>SQLite</title>
+        
+        <script>
+            
+    //Test for browser compatibility
+    if (window.openDatabase) {
+    //Create the database the parameters are 1. the database name 2.version number 3. a description 4. the size of the database (in bytes) 1024 x 1024 = 1MB
+    var mydb = openDatabase("alumnos_db", "0.1", "Base de datos de Alumnos", 1024 * 1024);
+
+    //create table alumnos
+    mydb.transaction(function (t) {
+        t.executeSql("CREATE TABLE IF NOT EXISTS Alumnos (id INTEGER PRIMARY KEY ASC, Nombre TEXT, Apellido TEXT)");
+    });
+    
+    } else {
+    alert("WebSQL No es soportado en tu browser!");
+    }
+
+//function to output the list of alumn in the database
+
+    function ActualizaListaAlumno(transaction, results) {
+    //initialise the listitems variable
+    var listitems = "";
+    //get the car list holder ul
+    var listholder = document.getElementById("ListaAlumnos");
+
+    //clear alumn list ul
+    listholder.innerHTML = "";
+
+    var i;
+    //Iterate through the results
+    for (i = 0; i < results.rows.length; i++) {
+        //Get the current row
+        var row = results.rows.item(i);
+
+        listholder.innerHTML += "<li>" + row.Nombre + " - " + row.Apellido + " (<a href='javascript:void(0);' onclick='deleteAlumn(" + row.id + ");'>Borrar</a>)";
+    }
+
+}
+
+//function to get the list of alumn from the database
+
+function OutputAlumn() {
+    //check to ensure the mydb object has been created
+    if (mydb) {
+        //Get all the alumn from the database with a select statement, set outputCarList as the callback function for the executeSql command
+        mydb.transaction(function (t) {
+            t.executeSql("SELECT * FROM Alumnos", [], ActualizaListaAlumno);
+        });
+    } else {
+        alert("BD no encontrada, tu browser no soporta sql!");
+    }
+}
+
+//function to add the car to the database
+
+function agregarAlumno() {
+    //check to ensure the mydb object has been created
+    if (mydb) {
+        //get the values of the make and model text inputs
+        var Nombre = document.getElementById("AlumnoNombre").value;
+        var Apellido = document.getElementById("AlumnoApellido").value;
+
+        //Test to ensure that the user has entered both a make and model
+        if (Nombre !== "" && Apellido !== "") {
+            //Insert the user entered details into the alumn table, note the use of the ? placeholder, these will replaced by the data passed in as an array as the second parameter
+            mydb.transaction(function (t) {
+                t.executeSql("INSERT INTO Alumnos (Nombre, Apellido) VALUES (?, ?)", [Nombre, Apellido]);
+                OutputAlumn();
+            });
+        } else {
+            alert("Debes ingresar el apellido");
+        }
+    } else {
+        alert("Base de datos no encontrada, El browser no soporta web sql!");
+    }
+}
+
+
+//function to remove a car from the database, passed the row id as it's only parameter
+
+function deleteAlumn(id) {
+    //check to ensure the mydb object has been created
+    if (mydb) {
+        //Get all the alumn from the database with a select statement, set outputCarList as the callback function for the executeSql command
+        mydb.transaction(function (t) {
+            t.executeSql("DELETE FROM Alumnos WHERE id=?", [id], OutputAlumn);
+        });
+    } else {
+         alert("Base de datos no encontrada, El browser no soporta web sql!");
+    }
+}
+
+OutputAlumn();
+            
+        </script>
+        
+        
+    </head>
+    <body>
+        <h1>Ingreso de alumnos a la BD</h1>
+
+<div id="controls">
+    <p>Agrega un alumno a la Base de datos</p>
+    <label>Nombre : </label>
+    <input type="text" id="AlumnoNombre" />
+    <br />
+    <label>Apellido:</label>
+    <input type="text" id="AlumnoApellido" />
+    <br />
+    <button type="button" id="agregar" onclick="agregarAlumno();">Agregar</button>
+</div>
+<div id="AlumnolistHolder">
+     <h3>Lista de Alumnos</h3>
+
+    <ul id="ListaAlumnos"></ul>
+</div>
+
+    </body>
+</html>
